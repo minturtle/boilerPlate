@@ -3,10 +3,10 @@ const pw = require('../secret/passwords.js');
 const bcrypt = require('bcrypt');
 const router = express.Router();
 const userModel = require('../models').user_info; 
-var jwt = require('jsonwebtoken'); 
+const jwt = require('jsonwebtoken'); 
+const { auth } = require('../middleware/auth.js');
 
-
-const privateKey = "11aa";
+const privateKey = pw.TOKEN_KEY;
 
 
 
@@ -45,28 +45,20 @@ router.post('/locallogin', function(req,res){
 	
 })
 
-router.get('/auth', function(req,res){
-	
-})
 
-//logout
-router.post('/logout', function(req, res){
-	var token = req.cookies.x_auth;
+//middlware 을 통해 req.user은 인증이 완료된 유저
+router.post('/logout', auth , function(req, res){
+	if(!(req.user||req.token))res.status(404).send("err");
 	
-	jwt.verify(token, privateKey, function(err, email) {
- 		if(err) res.status(404).send("err");
-		userModel.findOne({where :{
-			email : email,
-			token : token
-		}}).then(user=>{
-			if(!user) res.status(404).send("token err");
-			
-			user.token = null;
-			res.clearCookie('x_auth');
-			res.redirect('/');
-		})
-		
-	});
+	//userModel update를 통해 token을 만료 시키고 cookie를 제거함
+	userModel.update({token : null},{
+		where : {
+			id : req.user.id
+		}
+	}).then(()=>{
+		res.clearCookie('x_auth');
+		res.redirect('/');
+	})
 });
 
 
