@@ -2,6 +2,9 @@ const mysql = require("mysql");
 const mysqlConnectionData = require('./mysqlConnectionData');
 
 const util = require('util');
+
+
+
 const connection = mysql.createConnection(mysqlConnectionData)
 
 
@@ -14,8 +17,13 @@ const e = {
     //registerJson : {userId, password, userName}
     save : (registerJson , callback)=>{
         const insertQuery = createInsertQuery(registerJson);
-
         connection.query(insertQuery, callback);
+    },
+
+    findOneById : (userId, callback)=>{
+        const selectQuery = util.format("SELECT * FROM user WHERE user_id = '%s'", userId);
+
+        connection.query(selectQuery, callback);
     }
 }
 
@@ -24,5 +32,6 @@ function createInsertQuery(registerjson){
     return util.format("INSERT INTO user(user_id, user_name, password) VALUES ('%s', '%s', '%s');"
     , registerjson.userId, registerjson.userName, registerjson.password);
 }
+
 
 module.exports = e;
